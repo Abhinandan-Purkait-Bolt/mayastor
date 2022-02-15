@@ -326,6 +326,27 @@ impl ReplyError {
         self.source = format!("{}::{}", source, self.source);
         self.extra = format!("{}::{}", extra, self.extra);
     }
+    /// useful when the grpc server is dropped due to panic
+    pub fn tonic_reply_error(source: String, extra: String) -> Self {
+        Self {
+            kind: ReplyErrorKind::Aborted,
+            resource: ResourceKind::Node,
+            source,
+            extra,
+        }
+    }
+}
+
+impl From<tonic::Status> for ReplyError {
+    fn from(status: tonic::Status) -> Self {
+        Self::tonic_reply_error(status.to_string(), status.full_string())
+    }
+}
+
+impl From<tonic::transport::Error> for ReplyError {
+    fn from(e: tonic::transport::Error) -> Self {
+        Self::tonic_reply_error(e.to_string(), e.full_string())
+    }
 }
 
 impl std::fmt::Display for ReplyError {
