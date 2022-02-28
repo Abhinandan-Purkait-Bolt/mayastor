@@ -1,6 +1,5 @@
 use std::{
     convert::TryFrom,
-    env,
     ffi::CString,
     os::raw::{c_char, c_void},
     pin::Pin,

@@ -123,6 +123,7 @@ impl Registration {
             .register(tonic::Request::new(RegisterRequest {
                 id: self.config.node.to_string(),
                 grpc_endpoint: self.config.grpc_endpoint.clone(),
+                instance_uuid: None
             }))
             .await
         {
