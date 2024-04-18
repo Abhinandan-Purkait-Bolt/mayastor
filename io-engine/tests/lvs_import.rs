@@ -54,6 +54,7 @@ async fn lvs_import_many_volume() {
             uuid: Some(POOL_UUID.to_string()),
             cluster_size: None,
             backend: Default::default(),
+            encryption: None,
         };
 
         // Create LVS.

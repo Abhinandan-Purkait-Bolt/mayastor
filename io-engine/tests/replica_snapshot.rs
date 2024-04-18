@@ -98,6 +98,7 @@ async fn replica_snapshot() {
                 uuid: None,
                 cluster_size: None,
                 backend: PoolBackend::Lvs,
+                encryption: None,
             })
             .await
             .unwrap();

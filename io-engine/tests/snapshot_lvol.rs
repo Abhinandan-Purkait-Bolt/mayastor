@@ -72,6 +72,7 @@ async fn create_test_pool(
         uuid: None,
         cluster_size,
         backend: PoolBackend::Lvs,
+        encryption: None,
     })
     .await
     .expect("Failed to create test pool");

@@ -176,6 +176,7 @@ impl From<&Pool> for PoolArgs {
             uuid: None,
             cluster_size: None,
             backend: pool.backend,
+            encryption: None,
         }
     }
 }

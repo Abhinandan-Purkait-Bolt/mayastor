@@ -18,6 +18,7 @@ use crate::{
     },
     bdev_api::{self, BdevError},
     core::UntypedBdev,
+    pool_backend::Encryption,
 };
 
 pub(super) struct Loopback {
@@ -65,8 +66,12 @@ impl TryFrom<&Url> for Loopback {
 }
 
 impl GetName for Loopback {
-    fn get_name(&self) -> String {
-        self.name.clone()
+    fn get_name(&self, crypto: bool) -> String {
+        if crypto {
+            self.name.clone() + "_crypto"
+        } else {
+            self.name.clone()
+        }
     }
 }
 
@@ -74,13 +79,13 @@ impl GetName for Loopback {
 impl CreateDestroy for Loopback {
     type Error = BdevError;
 
-    async fn create(&self) -> Result<String, Self::Error> {
+    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
         debug!("{:?}: creating loopback", self);
 
         if let Some(mut bdev) = UntypedBdev::lookup_by_name(&self.name) {
             if self.uuid.is_some() && Some(bdev.uuid()) != self.uuid {
                 return Err(BdevError::BdevWrongUuid {
-                    name: self.get_name(),
+                    name: self.get_name(false),
                     uuid: bdev.uuid_as_string(),
                 });
             }
@@ -89,15 +94,15 @@ impl CreateDestroy for Loopback {
                 error!(
                     "failed to add alias {} to device {}",
                     self.alias,
-                    self.get_name()
+                    self.get_name(false)
                 );
             }
 
-            return Ok(self.get_name());
+            return Ok(self.get_name(false));
         }
 
         Err(BdevError::BdevNotFound {
-            name: self.get_name(),
+            name: self.get_name(false),
         })
     }
 

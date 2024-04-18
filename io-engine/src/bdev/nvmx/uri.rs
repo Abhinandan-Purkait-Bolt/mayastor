@@ -51,6 +51,7 @@ use crate::{
     core::MayastorEnvironment,
     ffihelper::ErrnoResult,
     subsys::Config,
+    pool_backend::Encryption,
 };
 
 use super::controller::transport::NvmeTransportId;
@@ -193,8 +194,12 @@ impl TryFrom<&Url> for NvmfDeviceTemplate {
 }
 
 impl GetName for NvmfDeviceTemplate {
-    fn get_name(&self) -> String {
-        format!("{}n1", self.name)
+    fn get_name(&self, crypto: bool) -> String {
+        if crypto {
+            format!("{}n1_crypto", self.name)
+        } else {
+            format!("{}n1", self.name)
+        }
     }
 }
 
@@ -253,7 +258,7 @@ impl<'probe> NvmeControllerContext<'probe> {
         NvmeControllerContext {
             opts,
             trid,
-            name: template.get_name(),
+            name: template.get_name(false),
             sender: Some(sender),
             receiver: Some(receiver),
             poller: None,
@@ -278,9 +283,9 @@ impl<'probe> NvmeControllerContext<'probe> {
 impl CreateDestroy for NvmfDeviceTemplate {
     type Error = BdevError;
 
-    async fn create(&self) -> Result<String, Self::Error> {
-        info!("::create() {}", self.get_name());
-        let cname = self.get_name();
+    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+        info!("::create() {}", self.get_name(false));
+        let cname = self.get_name(false);
         if NVME_CONTROLLERS.lookup_by_name(&cname).is_some() {
             return Err(BdevError::BdevExists {
                 name: cname,
@@ -328,7 +333,7 @@ impl CreateDestroy for NvmfDeviceTemplate {
             probe_ctx.as_mut().cb_ctx = raw_ctx as *mut c_void;
         }
 
-        let name = self.get_name();
+        let name = self.get_name(false);
 
         let poller = PollerBuilder::new()
             .with_name("nvme_async_probe_poller")
@@ -373,7 +378,7 @@ impl CreateDestroy for NvmfDeviceTemplate {
         match attach_status {
             Err(e) => {
                 // Remove controller from the list in case of attach failures.
-                controller::destroy_device(self.get_name())
+                controller::destroy_device(self.get_name(false))
                     .await
                     // Propagate initial error once controller has been
                     // deinitialized.
@@ -405,6 +410,6 @@ impl CreateDestroy for NvmfDeviceTemplate {
     }
 
     async fn destroy(self: Box<Self>) -> Result<(), Self::Error> {
-        controller::destroy_device(self.get_name()).await
+        controller::destroy_device(self.get_name(false)).await
     }
 }

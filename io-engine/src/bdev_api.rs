@@ -103,7 +103,7 @@ pub enum BdevError {
 /// Return the bdev name (which can be different from URI).
 pub async fn bdev_create(uri: &str) -> Result<String, BdevError> {
     info!(?uri, "create");
-    uri::parse(uri)?.create().await
+    uri::parse(uri)?.create(None).await
 }
 
 /// Parse URI and destroy bdev described in the URI.
@@ -114,7 +114,7 @@ pub async fn bdev_destroy(uri: &str) -> Result<(), BdevError> {
 
 /// TODO
 pub fn bdev_get_name(uri: &str) -> Result<String, BdevError> {
-    Ok(uri::parse(uri)?.get_name())
+    Ok(uri::parse(uri)?.get_name(false))
 }
 
 /// TODO
@@ -123,7 +123,7 @@ where
     T: spdk_rs::BdevOps,
 {
     match uri::parse(uri.as_ref()) {
-        Ok(device) if device.get_name() == bdev.name() => {
+        Ok(device) if device.get_name(false) == bdev.name() => {
             bdev.driver()
                 == match uri.scheme() {
                     "nvmf" | "pcie" => "nvme",
@@ -140,7 +140,7 @@ where
     T: spdk_rs::BdevOps,
 {
     match uri::parse(uri.as_ref()) {
-        Ok(device) if device.get_name() == bdev.name() => {
+        Ok(device) if device.get_name(false) == bdev.name() => {
             bdev.driver()
                 == match uri.scheme() {
                     "nvmf" | "pcie" => "nvme",

@@ -12,6 +12,7 @@ use crate::{
     bdev_api::{self, BdevError},
     core::UntypedBdev,
     ffihelper::{cb_arg, done_errno_cb, ErrnoResult},
+    pool_backend::Encryption,
 };
 
 #[derive(Debug)]
@@ -68,8 +69,12 @@ impl TryFrom<&Url> for Uring {
 }
 
 impl GetName for Uring {
-    fn get_name(&self) -> String {
-        self.name.clone()
+    fn get_name(&self, crypto: bool) -> String {
+        if crypto {
+            self.name.clone() + "_crypto"
+        } else {
+            self.name.clone()
+        }
     }
 }
 
@@ -78,14 +83,13 @@ impl CreateDestroy for Uring {
     type Error = BdevError;
 
     /// Create a uring bdev
-    async fn create(&self) -> Result<String, Self::Error> {
+    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
         if UntypedBdev::lookup_by_name(&self.name).is_some() {
             return Err(BdevError::BdevExists {
-                name: self.get_name(),
+                name: self.get_name(false),
             });
         }
-
-        let cname = CString::new(self.get_name()).unwrap();
+        let cname = CString::new(self.get_name(false)).unwrap();
 
         if let Some(mut bdev) = UntypedBdev::checked_from_ptr(unsafe {
             create_uring_bdev(cname.as_ptr(), cname.as_ptr(), self.blk_size)
@@ -98,7 +102,7 @@ impl CreateDestroy for Uring {
                 error!(
                     "failed to add alias {} to device {}",
                     self.alias,
-                    self.get_name()
+                    self.get_name(false)
                 );
             }
 
@@ -106,7 +110,7 @@ impl CreateDestroy for Uring {
         }
 
         Err(BdevError::BdevNotFound {
-            name: self.get_name(),
+            name: self.get_name(false),
         })
     }
 
@@ -126,14 +130,14 @@ impl CreateDestroy for Uring {
                 receiver
                     .await
                     .context(bdev_api::BdevCommandCanceled {
-                        name: self.get_name(),
+                        name: self.get_name(false),
                     })?
                     .context(bdev_api::DestroyBdevFailed {
-                        name: self.get_name(),
+                        name: self.get_name(false),
                     })
             }
             None => Err(BdevError::BdevNotFound {
-                name: self.get_name(),
+                name: self.get_name(false),
             }),
         }
     }

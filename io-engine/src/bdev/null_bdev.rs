@@ -15,6 +15,7 @@ use crate::{
     bdev_api::{self, BdevError},
     core::UntypedBdev,
     ffihelper::{cb_arg, done_errno_cb, ErrnoResult, IntoCString},
+    pool_backend::Encryption,
 };
 
 #[derive(Debug)]
@@ -118,8 +119,12 @@ impl TryFrom<&Url> for Null {
 }
 
 impl GetName for Null {
-    fn get_name(&self) -> String {
-        self.name.clone()
+    fn get_name(&self, crypto: bool) -> String {
+        if crypto {
+            self.name.clone() + "_crypto"
+        } else {
+            self.name.clone()
+        }
     }
 }
 
@@ -127,13 +132,12 @@ impl GetName for Null {
 impl CreateDestroy for Null {
     type Error = BdevError;
 
-    async fn create(&self) -> Result<String, Self::Error> {
+    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
         if UntypedBdev::lookup_by_name(&self.name).is_some() {
             return Err(BdevError::BdevExists {
                 name: self.name.clone(),
             });
         }
-
         let cname = self.name.clone().into_cstring();
         let opts = spdk_rs::libspdk::spdk_null_bdev_opts {
             name: cname.as_ptr(),
@@ -169,7 +173,7 @@ impl CreateDestroy for Null {
                 error!(
                     "failed to add alias {} to device {}",
                     self.alias,
-                    self.get_name()
+                    self.get_name(false)
                 );
             }
 

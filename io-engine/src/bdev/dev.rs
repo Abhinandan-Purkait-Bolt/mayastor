@@ -106,11 +106,11 @@ pub fn device_lookup(name: &str) -> Option<Box<dyn BlockDevice>> {
 
 /// Lookup up device name by its uri.
 pub fn device_name(uri: &str) -> Result<String, BdevError> {
-    Ok(uri::parse(uri)?.get_name())
+    Ok(uri::parse(uri)?.get_name(false))
 }
 
 pub async fn device_create(uri: &str) -> Result<String, BdevError> {
-    uri::parse(uri)?.create().await
+    uri::parse(uri)?.create(None).await
 }
 
 pub async fn device_destroy(uri: &str) -> Result<(), BdevError> {

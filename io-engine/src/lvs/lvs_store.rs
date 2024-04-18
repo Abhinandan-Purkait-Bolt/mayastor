@@ -251,7 +251,7 @@ impl Lvs {
     pub async fn import(name: &str, bdev: &str) -> Result<Lvs, Error> {
         let (sender, receiver) = pair::<ErrnoResult<Lvs>>();
 
-        debug!("Trying to import lvs '{}' from '{}'...", name, bdev);
+        info!("Trying to import lvs '{}' from '{}'...", name, bdev);
 
         let mut bdev =
             UntypedBdev::lookup_by_name(bdev).ok_or(Error::InvalidBdev {
@@ -329,17 +329,17 @@ impl Lvs {
     #[tracing::instrument(level = "debug", err)]
     pub async fn import_from_args(args: PoolArgs) -> Result<Lvs, Error> {
         let disk = Self::parse_disk(args.disks.clone())?;
-
+        info!("HR: Importing lvs '{}' from '{}'...", args.name, disk);
         let parsed = uri::parse(&disk).map_err(|e| Error::InvalidBdev {
             source: e,
             name: args.name.clone(),
         })?;
-
+        info!("HR: Parsed disk: {:?}", parsed);
         // At any point two pools with the same name should
         // not exists so returning error
         if let Some(pool) = Self::lookup(&args.name) {
             let pool_name = pool.base_bdev().name().to_string();
-            return if pool_name.as_str() == parsed.get_name() {
+            return if pool_name.as_str() == parsed.get_name(false) { 
                 Err(Error::Import {
                     source: Errno::EEXIST,
                     name: args.name.clone(),
@@ -355,15 +355,15 @@ impl Lvs {
                 })
             };
         }
-
-        let bdev = match parsed.create().await {
+        info!("HR: Before lvs pool create => {:?}", parsed);
+        let bdev = match parsed.create(None).await {
             Err(e) => match e {
                 BdevError::BdevExists {
                     ..
-                } => Ok(parsed.get_name()),
+                } => Ok(parsed.get_name(true)),
                 BdevError::CreateBdevInvalidParams {
                     source, ..
-                } if source == Errno::EEXIST => Ok(parsed.get_name()),
+                } if source == Errno::EEXIST => Ok(parsed.get_name(false)),
                 _ => {
                     tracing::error!("Failed to create pool bdev: {e:?}");
                     Err(Error::InvalidBdev {
@@ -374,7 +374,8 @@ impl Lvs {
             },
             Ok(name) => Ok(name),
         }?;
-
+        // let bdev = "test";
+        info!("HR: Importing bdev for pool: {:?}", bdev);
         let pool = Self::import(&args.name, &bdev).await?;
         // Try to destroy the pending snapshots without catching
         // the error.
@@ -510,7 +511,7 @@ impl Lvs {
         })?;
 
         if let Some(pool) = Self::lookup(&args.name) {
-            return if pool.base_bdev().name() == parsed.get_name() {
+            return if pool.base_bdev().name() == parsed.get_name(false) {
                 Err(Error::PoolCreate {
                     source: Errno::EEXIST,
                     name: args.name.clone(),
@@ -523,14 +524,14 @@ impl Lvs {
             };
         }
 
-        let bdev = match parsed.create().await {
+        let bdev = match parsed.create(None).await {
             Err(e) => match e {
                 BdevError::BdevExists {
                     ..
-                } => Ok(parsed.get_name()),
+                } => Ok(parsed.get_name(false)),
                 BdevError::CreateBdevInvalidParams {
                     source, ..
-                } if source == Errno::EEXIST => Ok(parsed.get_name()),
+                } if source == Errno::EEXIST => Ok(parsed.get_name(false)),
                 _ => {
                     tracing::error!("Failed to create pool bdev: {e:?}");
                     Err(Error::InvalidBdev {

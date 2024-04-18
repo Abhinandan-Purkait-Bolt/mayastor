@@ -31,7 +31,12 @@ use crate::{
     bdev_api::BdevError,
     core::LogicalVolume,
     lvs::LvsLvol,
+<<<<<<< HEAD
     pool_backend::{PoolArgs, PoolBackend},
+=======
+    pool_backend::PoolArgs,
+    pool_backend::Encryption,
+>>>>>>> 23790bcc (feat(encryption): support atrest encryption during pool creation)
 };
 
 /// An lvol specified via URI.
@@ -180,8 +185,12 @@ impl From<String> for LvsMode {
 }
 
 impl GetName for Lvol {
-    fn get_name(&self) -> String {
-        self.name.clone()
+    fn get_name(&self, crypto: bool) -> String {
+        if crypto {
+            self.name.clone() + "_crypto"
+        } else {
+            self.name.clone()
+        }
     }
 }
 
@@ -189,7 +198,7 @@ impl GetName for Lvol {
 impl CreateDestroy for Lvol {
     type Error = BdevError;
 
-    async fn create(&self) -> Result<String, Self::Error> {
+    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
         let lvs = self.lvs.create().await?;
         self.lvs.destroy_lvol(&self.name).await.ok();
         lvs.create_lvol(&self.name, self.size, None, false, None)
@@ -216,6 +225,7 @@ impl Lvs {
             uuid: None,
             cluster_size: None,
             backend: PoolBackend::Lvs,
+            encryption: None,
         };
         match &self.mode {
             LvsMode::Create => {
@@ -255,7 +265,7 @@ impl Lvs {
             })?;
 
         let parsed = super::uri::parse(&disk)?;
-        let bdev_str = parsed.create().await?;
+        let bdev_str = parsed.create(None).await?;
         {
             let bdev =
                 crate::core::Bdev::get_by_name(&bdev_str).map_err(|_| {

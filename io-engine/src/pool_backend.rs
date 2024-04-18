@@ -8,8 +8,16 @@ pub struct PoolArgs {
     pub uuid: Option<String>,
     pub cluster_size: Option<u32>,
     pub backend: PoolBackend,
+    pub encryption: Option<Encryption>,
 }
 
+#[derive(Clone, Debug)]
+pub struct Encryption {
+    pub cipher: String,
+    pub hex_key1: String,
+    pub hex_key2: String,
+    pub key_name: String,
+}
 /// PoolBackend is the type of pool underneath Lvs, Lvm, etc
 #[derive(Copy, Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub enum PoolBackend {

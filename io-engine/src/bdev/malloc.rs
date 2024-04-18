@@ -31,6 +31,7 @@ use crate::{
     bdev_api::{self, BdevError},
     core::VerboseError,
     ffihelper::{cb_arg, done_errno_cb, ErrnoResult, IntoCString},
+    pool_backend::Encryption,
 };
 
 pub struct Malloc {
@@ -146,8 +147,12 @@ impl TryFrom<&Url> for Malloc {
 }
 
 impl GetName for Malloc {
-    fn get_name(&self) -> String {
-        self.name.clone()
+    fn get_name(&self, crypto: bool) -> String {
+        if crypto {
+            self.name.clone() + "_crypto"
+        } else {
+            self.name.clone()
+        }
     }
 }
 
@@ -155,7 +160,7 @@ impl GetName for Malloc {
 impl CreateDestroy for Malloc {
     type Error = BdevError;
 
-    async fn create(&self) -> Result<String, Self::Error> {
+    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
         if UntypedBdev::lookup_by_name(&self.name).is_some() {
             return Err(BdevError::BdevExists {
                 name: self.name.clone(),
@@ -204,7 +209,7 @@ impl CreateDestroy for Malloc {
                 error!(
                     "failed to add alias {} to device {}",
                     self.alias,
-                    self.get_name()
+                    self.get_name(false)
                 );
             }
 

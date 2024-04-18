@@ -28,6 +28,7 @@ use url::Url;
 use crate::{
     bdev::{dev::reject_unknown_parameters, util::uri, CreateDestroy, GetName},
     bdev_api::BdevError,
+    pool_backend::Encryption,
 };
 
 /// A nexus specified via URI.
@@ -101,8 +102,12 @@ impl TryFrom<&Url> for Nexus {
 }
 
 impl GetName for Nexus {
-    fn get_name(&self) -> String {
-        self.name.clone()
+    fn get_name(&self, crypto: bool) -> String {
+        if crypto {
+            self.name.clone() + "_crypto"
+        } else {
+            self.name.clone()
+        }
     }
 }
 
@@ -110,7 +115,7 @@ impl GetName for Nexus {
 impl CreateDestroy for Nexus {
     type Error = BdevError;
 
-    async fn create(&self) -> Result<String, Self::Error> {
+    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
         crate::bdev::nexus::nexus_create(
             &self.name,
             self.size,
@@ -122,7 +127,6 @@ impl CreateDestroy for Nexus {
             error: error.to_string(),
             name: self.name.to_owned(),
         })?;
-
         Ok(self.name.to_owned())
     }
 

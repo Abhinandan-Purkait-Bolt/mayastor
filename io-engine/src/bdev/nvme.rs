@@ -24,6 +24,7 @@ use crate::{
     bdev_api::{self, BdevError},
     core::UntypedBdev,
     ffihelper::{cb_arg, errno_result_from_i32, ErrnoResult, IntoCString},
+    pool_backend::Encryption,
 };
 
 #[derive(Debug)]
@@ -54,8 +55,12 @@ impl TryFrom<&Url> for NVMe {
 }
 
 impl GetName for NVMe {
-    fn get_name(&self) -> String {
-        format!("{}n1", self.name)
+    fn get_name(&self, crypto: bool) -> String {
+        if crypto {
+            format!("{}n1_crypto", self.name)
+        } else {
+            format!("{}n1", self.name)
+        }
     }
 }
 
@@ -63,7 +68,7 @@ impl GetName for NVMe {
 impl CreateDestroy for NVMe {
     type Error = BdevError;
 
-    async fn create(&self) -> Result<String, Self::Error> {
+    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
         extern "C" fn nvme_create_cb(
             arg: *mut c_void,
             _bdev_count: c_ulong,
@@ -83,7 +88,6 @@ impl CreateDestroy for NVMe {
                 name: self.name.clone(),
             });
         }
-
         let cname = self.name.clone().into_cstring();
         let mut context = NvmeCreateContext::new(self);
 
@@ -118,7 +122,7 @@ impl CreateDestroy for NVMe {
                 name: self.name.clone(),
             })?;
 
-        let success = UntypedBdev::lookup_by_name(&self.get_name())
+        let success = UntypedBdev::lookup_by_name(&self.get_name(false))
             .map(|mut b| b.add_alias(self.url.as_ref()))
             .expect("bdev created but not found!");
 
@@ -133,7 +137,7 @@ impl CreateDestroy for NVMe {
     }
 
     async fn destroy(self: Box<Self>) -> Result<(), Self::Error> {
-        if let Some(mut bdev) = UntypedBdev::lookup_by_name(&self.get_name()) {
+        if let Some(mut bdev) = UntypedBdev::lookup_by_name(&self.get_name(false)) {
             bdev.remove_alias(self.url.as_ref());
 
             let mut path_id = nvme_path_id::default();
@@ -147,7 +151,7 @@ impl CreateDestroy for NVMe {
                 )
             };
             if errno != 0 {
-                UntypedBdev::lookup_by_name(&self.get_name())
+                UntypedBdev::lookup_by_name(&self.get_name(false))
                     .map(|mut b| b.add_alias(self.url.as_ref()));
             }
             errno_result_from_i32((), errno).context(
@@ -157,7 +161,7 @@ impl CreateDestroy for NVMe {
             )
         } else {
             Err(BdevError::BdevNotFound {
-                name: self.get_name(),
+                name: self.get_name(false),
             })
         }
     }

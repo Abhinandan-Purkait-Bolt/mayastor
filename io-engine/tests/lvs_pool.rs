@@ -44,6 +44,7 @@ async fn lvs_pool_test() {
             uuid: None,
             cluster_size: None,
             backend: PoolBackend::Lvs,
+            encryption: None,
         })
         .await
         .unwrap();
@@ -148,6 +149,7 @@ async fn lvs_pool_test() {
             uuid: None,
             cluster_size: None,
             backend: PoolBackend::Lvs,
+            encryption: None,
         })
         .await
         .unwrap();
@@ -185,6 +187,7 @@ async fn lvs_pool_test() {
             uuid: None,
             cluster_size: None,
             backend: PoolBackend::Lvs,
+            encryption: None,
         })
         .await
         .unwrap();
@@ -325,6 +328,7 @@ async fn lvs_pool_test() {
             uuid: None,
             cluster_size: None,
             backend: PoolBackend::Lvs,
+            encryption: None,
         })
         .await
         .unwrap();
@@ -356,6 +360,7 @@ async fn lvs_pool_test() {
             uuid: None,
             cluster_size: None,
             backend: PoolBackend::Lvs,
+            encryption: None,
         })
         .await
         .err()
@@ -373,6 +378,7 @@ async fn lvs_pool_test() {
             uuid: None,
             cluster_size: None,
             backend: PoolBackend::Lvs,
+            encryption: None,
         })
         .await
         .unwrap();

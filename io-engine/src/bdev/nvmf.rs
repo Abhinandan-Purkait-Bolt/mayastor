@@ -28,6 +28,7 @@ use crate::{
     bdev_api::{self, BdevError},
     core::UntypedBdev,
     ffihelper::{cb_arg, errno_result_from_i32, ErrnoResult},
+    pool_backend::Encryption,
 };
 
 const DEFAULT_NVMF_PORT: u16 = 4420;
@@ -128,10 +129,15 @@ impl TryFrom<&Url> for Nvmf {
 }
 
 impl GetName for Nvmf {
-    fn get_name(&self) -> String {
+    fn get_name(&self, crypto: bool) -> String {
         // The namespace instance is appended to the nvme bdev.
         // We currently only support one namespace per bdev.
-        format!("{}n1", self.name)
+        
+        if crypto {
+            format!("{}n1_crypto", self.name)
+        } else {
+            format!("{}n1", self.name)
+        }
     }
 }
 
@@ -140,10 +146,10 @@ impl CreateDestroy for Nvmf {
     type Error = BdevError;
 
     /// Create an NVMF bdev
-    async fn create(&self) -> Result<String, Self::Error> {
-        if UntypedBdev::lookup_by_name(&self.get_name()).is_some() {
+    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+        if UntypedBdev::lookup_by_name(&self.get_name(false)).is_some() {
             return Err(BdevError::BdevExists {
-                name: self.get_name(),
+                name: self.get_name(false),
             });
         }
 
@@ -160,7 +166,6 @@ impl CreateDestroy for Nvmf {
                 .send(errno_result_from_i32(bdev_count as usize, errno))
                 .expect("done callback receiver side disappeared");
         }
-
         let cname = CString::new(self.name.clone()).unwrap();
         let mut context = NvmeCreateContext::new(self);
 
@@ -209,7 +214,7 @@ impl CreateDestroy for Nvmf {
                 name: self.name.clone(),
             });
         }
-        if let Some(mut bdev) = UntypedBdev::lookup_by_name(&self.get_name()) {
+        if let Some(mut bdev) = UntypedBdev::lookup_by_name(&self.get_name(false)) {
             if let Some(u) = self.uuid {
                 if bdev.uuid_as_string() != u.hyphenated().to_string() {
                     error!("Connected to device {} but expect to connect to {} instead", bdev.uuid_as_string(), u.hyphenated().to_string());
@@ -219,7 +224,7 @@ impl CreateDestroy for Nvmf {
                 error!(
                     "Failed to add alias {} to device {}",
                     self.alias,
-                    self.get_name()
+                    self.get_name(false)
                 );
             }
         };
@@ -232,7 +237,7 @@ impl CreateDestroy for Nvmf {
 
     /// Destroy the given NVMF bdev
     async fn destroy(self: Box<Self>) -> Result<(), Self::Error> {
-        match UntypedBdev::lookup_by_name(&self.get_name()) {
+        match UntypedBdev::lookup_by_name(&self.get_name(false)) {
             Some(mut bdev) => {
                 bdev.remove_alias(&self.alias);
                 let cname = CString::new(self.name.clone()).unwrap();
@@ -251,7 +256,7 @@ impl CreateDestroy for Nvmf {
                 .await
             }
             None => Err(BdevError::BdevNotFound {
-                name: self.get_name(),
+                name: self.get_name(false),
             }),
         }
     }
