@@ -320,7 +320,9 @@ where
     /// return the URI that was used to construct the bdev, without uuid
     fn bdev_uri_original(&self) -> Option<url::Url> {
         for alias in self.aliases().iter() {
+            info!("HR: alias: {}", alias);
             if let Ok(uri) = url::Url::parse(alias) {
+                info!("HR: uri: {}", uri);
                 if bdev_uri_eq(self, &uri) {
                     return Some(uri);
                 }

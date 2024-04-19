@@ -206,20 +206,27 @@ impl PoolRpc for PoolService {
 
 impl From<Lvs> for Pool {
     fn from(l: Lvs) -> Self {
+        let encrypted = l.base_bdev().driver() == "crypto";
+        let disks = if encrypted {
+            vec![format!(
+                "{}",
+                l.base_bdev().name().trim_end_matches("_crypto")
+            )]
+        } else {
+            vec![l.base_bdev().bdev_uri_str().unwrap_or_else(|| "".into())]
+        };
+
         Self {
             uuid: l.uuid(),
             name: l.name().into(),
-            disks: vec![l
-                .base_bdev()
-                .bdev_uri_str()
-                .unwrap_or_else(|| "".into())],
+            disks,
             state: PoolState::PoolOnline.into(),
             capacity: l.capacity(),
             used: l.used(),
             committed: l.committed(),
             pooltype: PoolType::Lvs as i32,
             cluster_size: l.blob_cluster_size() as u32,
-            encrypted: false,
+            encrypted,
         }
     }
 }

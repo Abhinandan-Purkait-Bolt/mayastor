@@ -103,7 +103,7 @@ let
       [
         "--target-arch=nehalem"
         "--without-shared"
-        "--without-crypto"
+        "--with-crypto"
       ]
     else if (targetPlatform.config == "aarch64-unknown-linux-gnu") then
       [

@@ -356,11 +356,11 @@ impl Lvs {
             };
         }
         info!("HR: Before lvs pool create => {:?}", parsed);
-        let bdev = match parsed.create(None).await {
+        let bdev = match parsed.create(args.encryption.clone()).await {
             Err(e) => match e {
                 BdevError::BdevExists {
                     ..
-                } => Ok(parsed.get_name(true)),
+                } => Ok(parsed.get_name(args.encryption.is_some())),
                 BdevError::CreateBdevInvalidParams {
                     source, ..
                 } if source == Errno::EEXIST => Ok(parsed.get_name(false)),
@@ -524,7 +524,7 @@ impl Lvs {
             };
         }
 
-        let bdev = match parsed.create(None).await {
+        let bdev = match parsed.create(args.encryption.clone()).await {
             Err(e) => match e {
                 BdevError::BdevExists {
                     ..

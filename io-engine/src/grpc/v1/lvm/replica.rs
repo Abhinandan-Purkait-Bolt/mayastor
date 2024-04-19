@@ -330,7 +330,7 @@ impl From<lvm::LogicalVolume> for Replica {
             pooluuid: l.vg_uuid().to_string(),
             snapshot_uuid: None,
             entity_id: l.entity_id().map(Clone::clone),
-            enrypted: false,
+            encrypted: false,
         }
     }
 }

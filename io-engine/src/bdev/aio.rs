@@ -139,19 +139,19 @@ impl CreateDestroy for Aio {
     /// Create an AIO bdev
     async fn create(
         &self,
-        _encrypt: Option<Encryption>,
+        encrypt: Option<Encryption>,
     ) -> Result<String, Self::Error> {
         if UntypedBdev::lookup_by_name(&self.name).is_some() {
             return Err(BdevError::BdevExists {
-                name: self.get_name(_encrypt.is_some()),
+                name: self.get_name(encrypt.is_some()),
             });
         }
-        let encrypt = Some(Encryption {
-            cipher: "AES_XTS".to_string(),
-            hex_key1: "00112233445566778899aabbccddeeff".to_string(),
-            hex_key2: "ffeeddccbbaa99887766554433221100".to_string(),
-            key_name: "ut_key".to_string(),
-        });
+        // let encrypt = Some(Encryption {
+        //     cipher: "AES_XTS".to_string(),
+        //     hex_key1: "00112233445566778899aabbccddeeff".to_string(),
+        //     hex_key2: "ffeeddccbbaa99887766554433221100".to_string(),
+        //     key_name: "ut_key".to_string(),
+        // });
 
         let cname = CString::new(self.get_name(false)).unwrap();
 

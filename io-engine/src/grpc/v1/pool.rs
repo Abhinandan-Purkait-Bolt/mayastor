@@ -1,7 +1,7 @@
 use crate::{
     grpc::{GrpcClientContext, GrpcResult, RWLock, RWSerializer},
     lvs::Error as LvsError,
-    pool_backend::{PoolArgs, PoolBackend},
+    pool_backend::{Encryption, PoolArgs, PoolBackend},
 };
 use ::function_name::named;
 use futures::FutureExt;
@@ -138,7 +138,12 @@ impl TryFrom<CreatePoolRequest> for PoolArgs {
             uuid: args.uuid,
             cluster_size: args.cluster_size,
             backend: backend.into(),
-            encryption: None,
+            encryption: args.encryption.map(|e| Encryption {
+                cipher: e.cipher,
+                hex_key1: e.hex_key1,
+                hex_key2: e.hex_key2,
+                key_name: e.key_name,
+            }),
         })
     }
 }
