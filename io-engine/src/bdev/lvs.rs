@@ -31,12 +31,7 @@ use crate::{
     bdev_api::BdevError,
     core::LogicalVolume,
     lvs::LvsLvol,
-<<<<<<< HEAD
-    pool_backend::{PoolArgs, PoolBackend},
-=======
-    pool_backend::PoolArgs,
-    pool_backend::Encryption,
->>>>>>> 23790bcc (feat(encryption): support atrest encryption during pool creation)
+    pool_backend::{Encryption, PoolArgs, PoolBackend},
 };
 
 /// An lvol specified via URI.
@@ -198,7 +193,10 @@ impl GetName for Lvol {
 impl CreateDestroy for Lvol {
     type Error = BdevError;
 
-    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+    async fn create(
+        &self,
+        _encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error> {
         let lvs = self.lvs.create().await?;
         self.lvs.destroy_lvol(&self.name).await.ok();
         lvs.create_lvol(&self.name, self.size, None, false, None)

@@ -12,7 +12,10 @@ pub use nvmx::{
 
 mod aio;
 pub(crate) mod dev;
-use crate::{core::{MayastorEnvironment, PtplProps}, pool_backend::Encryption};
+use crate::{
+    core::{MayastorEnvironment, PtplProps},
+    pool_backend::Encryption,
+};
 pub(crate) use dev::uri;
 
 pub(crate) mod device;
@@ -38,8 +41,11 @@ impl<T: CreateDestroy + GetName + std::fmt::Debug> BdevCreateDestroy for T {}
 /// Note also that the required methods are declared as async.
 pub trait CreateDestroy {
     type Error;
-    
-    async fn create(&self, encrypt: Option<Encryption>) -> Result<String, Self::Error>;
+
+    async fn create(
+        &self,
+        encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error>;
     async fn destroy(self: Box<Self>) -> Result<(), Self::Error>;
 }
 

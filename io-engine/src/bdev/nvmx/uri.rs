@@ -50,8 +50,8 @@ use crate::{
     constants::NVME_NQN_PREFIX,
     core::MayastorEnvironment,
     ffihelper::ErrnoResult,
-    subsys::Config,
     pool_backend::Encryption,
+    subsys::Config,
 };
 
 use super::controller::transport::NvmeTransportId;
@@ -283,7 +283,10 @@ impl<'probe> NvmeControllerContext<'probe> {
 impl CreateDestroy for NvmfDeviceTemplate {
     type Error = BdevError;
 
-    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+    async fn create(
+        &self,
+        _encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error> {
         info!("::create() {}", self.get_name(false));
         let cname = self.get_name(false);
         if NVME_CONTROLLERS.lookup_by_name(&cname).is_some() {

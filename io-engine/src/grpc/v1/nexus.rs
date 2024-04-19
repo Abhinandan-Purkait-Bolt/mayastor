@@ -359,6 +359,7 @@ impl<'n> nexus::Nexus<'n> {
             rebuilds: self.count_rebuild_jobs() as u32,
             ana_state: ana_state as i32,
             allowed_hosts: self.allowed_hosts(),
+            encrypted: false,
         }
     }
 }

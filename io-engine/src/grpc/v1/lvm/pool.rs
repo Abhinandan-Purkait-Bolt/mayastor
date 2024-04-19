@@ -212,6 +212,7 @@ impl From<VolumeGroup> for Pool {
             pooltype: PoolType::Lvm as i32,
             committed: v.committed(),
             cluster_size: v.cluster_size() as u32,
+            encrypted: false,
         }
     }
 }

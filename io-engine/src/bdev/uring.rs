@@ -83,7 +83,10 @@ impl CreateDestroy for Uring {
     type Error = BdevError;
 
     /// Create a uring bdev
-    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+    async fn create(
+        &self,
+        _encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error> {
         if UntypedBdev::lookup_by_name(&self.name).is_some() {
             return Err(BdevError::BdevExists {
                 name: self.get_name(false),

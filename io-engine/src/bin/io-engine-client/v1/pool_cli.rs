@@ -219,6 +219,7 @@ async fn create(mut ctx: Context, matches: &ArgMatches) -> crate::Result<()> {
             disks: disks_list,
             pooltype: v1rpc::pool::PoolType::from(pooltype) as i32,
             cluster_size,
+            encryption: None,
         })
         .await
         .context(GrpcStatus)?;

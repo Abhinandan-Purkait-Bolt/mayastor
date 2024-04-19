@@ -196,11 +196,8 @@ impl TryFrom<ImportPoolRequest> for PoolArgs {
             disks: args.disks,
             uuid: args.uuid,
             cluster_size: None,
-<<<<<<< HEAD
             backend: backend.into(),
-=======
             encryption: None,
->>>>>>> 23790bcc (feat(encryption): support atrest encryption during pool creation)
         })
     }
 }

@@ -79,7 +79,10 @@ impl GetName for Loopback {
 impl CreateDestroy for Loopback {
     type Error = BdevError;
 
-    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+    async fn create(
+        &self,
+        _encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error> {
         debug!("{:?}: creating loopback", self);
 
         if let Some(mut bdev) = UntypedBdev::lookup_by_name(&self.name) {

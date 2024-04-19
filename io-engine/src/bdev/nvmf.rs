@@ -132,7 +132,7 @@ impl GetName for Nvmf {
     fn get_name(&self, crypto: bool) -> String {
         // The namespace instance is appended to the nvme bdev.
         // We currently only support one namespace per bdev.
-        
+
         if crypto {
             format!("{}n1_crypto", self.name)
         } else {
@@ -146,7 +146,10 @@ impl CreateDestroy for Nvmf {
     type Error = BdevError;
 
     /// Create an NVMF bdev
-    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+    async fn create(
+        &self,
+        _encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error> {
         if UntypedBdev::lookup_by_name(&self.get_name(false)).is_some() {
             return Err(BdevError::BdevExists {
                 name: self.get_name(false),
@@ -214,7 +217,9 @@ impl CreateDestroy for Nvmf {
                 name: self.name.clone(),
             });
         }
-        if let Some(mut bdev) = UntypedBdev::lookup_by_name(&self.get_name(false)) {
+        if let Some(mut bdev) =
+            UntypedBdev::lookup_by_name(&self.get_name(false))
+        {
             if let Some(u) = self.uuid {
                 if bdev.uuid_as_string() != u.hyphenated().to_string() {
                     error!("Connected to device {} but expect to connect to {} instead", bdev.uuid_as_string(), u.hyphenated().to_string());

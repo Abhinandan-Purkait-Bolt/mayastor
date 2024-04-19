@@ -216,6 +216,7 @@ async fn replica_create(
         share,
         size: size.get_bytes() as u64,
         allowed_hosts,
+        encryption: false,
     };
 
     let response = ctx

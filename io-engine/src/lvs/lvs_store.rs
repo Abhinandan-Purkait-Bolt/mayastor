@@ -339,7 +339,7 @@ impl Lvs {
         // not exists so returning error
         if let Some(pool) = Self::lookup(&args.name) {
             let pool_name = pool.base_bdev().name().to_string();
-            return if pool_name.as_str() == parsed.get_name(false) { 
+            return if pool_name.as_str() == parsed.get_name(false) {
                 Err(Error::Import {
                     source: Errno::EEXIST,
                     name: args.name.clone(),

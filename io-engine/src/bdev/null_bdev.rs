@@ -132,7 +132,10 @@ impl GetName for Null {
 impl CreateDestroy for Null {
     type Error = BdevError;
 
-    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+    async fn create(
+        &self,
+        _encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error> {
         if UntypedBdev::lookup_by_name(&self.name).is_some() {
             return Err(BdevError::BdevExists {
                 name: self.name.clone(),

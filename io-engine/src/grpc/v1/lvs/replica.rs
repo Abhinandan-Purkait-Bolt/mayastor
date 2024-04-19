@@ -446,6 +446,7 @@ impl From<Lvol> for Replica {
             snapshot_uuid: source_uuid,
             pooltype: PoolType::Lvs as i32,
             entity_id: l.entity_id(),
+            enrypted: false,
         }
     }
 }

@@ -219,6 +219,7 @@ impl From<Lvs> for Pool {
             committed: l.committed(),
             pooltype: PoolType::Lvs as i32,
             cluster_size: l.blob_cluster_size() as u32,
+            encrypted: false,
         }
     }
 }

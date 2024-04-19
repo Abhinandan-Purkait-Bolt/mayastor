@@ -68,7 +68,10 @@ impl GetName for NVMe {
 impl CreateDestroy for NVMe {
     type Error = BdevError;
 
-    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+    async fn create(
+        &self,
+        _encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error> {
         extern "C" fn nvme_create_cb(
             arg: *mut c_void,
             _bdev_count: c_ulong,
@@ -137,7 +140,9 @@ impl CreateDestroy for NVMe {
     }
 
     async fn destroy(self: Box<Self>) -> Result<(), Self::Error> {
-        if let Some(mut bdev) = UntypedBdev::lookup_by_name(&self.get_name(false)) {
+        if let Some(mut bdev) =
+            UntypedBdev::lookup_by_name(&self.get_name(false))
+        {
             bdev.remove_alias(self.url.as_ref());
 
             let mut path_id = nvme_path_id::default();

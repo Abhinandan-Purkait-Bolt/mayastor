@@ -49,6 +49,7 @@ async fn create_replicas(h: &mut RpcHandle) {
             pooltype: 0,
             disks: vec!["malloc:///disk0?size_mb=64".into()],
             cluster_size: None,
+            encryption: None,
         })
         .await
         .unwrap();

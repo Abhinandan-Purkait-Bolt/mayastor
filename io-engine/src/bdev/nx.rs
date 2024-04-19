@@ -115,7 +115,10 @@ impl GetName for Nexus {
 impl CreateDestroy for Nexus {
     type Error = BdevError;
 
-    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+    async fn create(
+        &self,
+        _encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error> {
         crate::bdev::nexus::nexus_create(
             &self.name,
             self.size,

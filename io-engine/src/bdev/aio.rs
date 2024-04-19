@@ -11,13 +11,19 @@ use nix::errno::Errno;
 use snafu::ResultExt;
 use url::Url;
 
-use spdk_rs::libspdk::{bdev_aio_delete, create_aio_bdev, spdk_accel_crypto_key_create_param, spdk_create_crypto_bdev};
+use spdk_rs::libspdk::{
+    bdev_aio_delete,
+    create_aio_bdev,
+    spdk_accel_crypto_key_create_param,
+    spdk_create_crypto_bdev,
+};
 
 use crate::{
     bdev::{dev::reject_unknown_parameters, util::uri, CreateDestroy, GetName},
     bdev_api::{self, BdevError},
     core::{UntypedBdev, VerboseError},
-    ffihelper::{cb_arg, done_errno_cb, ErrnoResult}, pool_backend::Encryption,
+    ffihelper::{cb_arg, done_errno_cb, ErrnoResult},
+    pool_backend::Encryption,
 };
 
 pub(super) struct Aio {
@@ -87,11 +93,18 @@ impl GetName for Aio {
         }
     }
 }
-fn create_crypto_bdev(name: String, base_bdev_name: String, encrypt_param: Encryption) {
-    // let cipher = CString::new("AES_XTS").expect("Failed to create cipher CString");
-    // let hex_key = CString::new("00112233445566778899aabbccddeeff").expect("Failed to create hex_key CString");
-    // let hex_key2 = CString::new("ffeeddccbbaa99887766554433221100").expect("Failed to create hex_key2 CString");
-    // let key_name = CString::new("ut_key").expect("Failed to create key_name CString");
+fn create_crypto_bdev(
+    name: String,
+    base_bdev_name: String,
+    encrypt_param: Encryption,
+) {
+    // let cipher = CString::new("AES_XTS").expect("Failed to create cipher
+    // CString"); let hex_key =
+    // CString::new("00112233445566778899aabbccddeeff").expect("Failed to create
+    // hex_key CString"); let hex_key2 =
+    // CString::new("ffeeddccbbaa99887766554433221100").expect("Failed to create
+    // hex_key2 CString"); let key_name =
+    // CString::new("ut_key").expect("Failed to create key_name CString");
     let cipher: CString = CString::new(encrypt_param.cipher).unwrap();
     let hex_key: CString = CString::new(encrypt_param.hex_key1).unwrap();
     let hex_key2: CString = CString::new(encrypt_param.hex_key2).unwrap();
@@ -104,11 +117,18 @@ fn create_crypto_bdev(name: String, base_bdev_name: String, encrypt_param: Encry
         key_name: key_name.as_ptr() as *mut i8,
         tweak_mode: std::ptr::null_mut(),
     };
-    info!("create_crypto_bdev: name: {:?}, base_bdev_name: {:?}", name, base_bdev_name);
+    info!(
+        "create_crypto_bdev: name: {:?}, base_bdev_name: {:?}",
+        name, base_bdev_name
+    );
     let cname = CString::new(name).unwrap();
     let cbase_bdev_name = CString::new(base_bdev_name).unwrap();
     let errno = unsafe {
-        spdk_create_crypto_bdev(cname.as_ptr() as *mut i8, cbase_bdev_name.as_ptr() as *mut i8, &mut key_params as *mut _)
+        spdk_create_crypto_bdev(
+            cname.as_ptr() as *mut i8,
+            cbase_bdev_name.as_ptr() as *mut i8,
+            &mut key_params as *mut _,
+        )
     };
     info!("create_crypto_bdev: {:?}", errno);
 }
@@ -117,7 +137,10 @@ impl CreateDestroy for Aio {
     type Error = BdevError;
 
     /// Create an AIO bdev
-    async fn create(&self, _encrypt: Option<Encryption>) -> Result<String, Self::Error> {
+    async fn create(
+        &self,
+        _encrypt: Option<Encryption>,
+    ) -> Result<String, Self::Error> {
         if UntypedBdev::lookup_by_name(&self.name).is_some() {
             return Err(BdevError::BdevExists {
                 name: self.get_name(_encrypt.is_some()),
@@ -129,7 +152,7 @@ impl CreateDestroy for Aio {
             hex_key2: "ffeeddccbbaa99887766554433221100".to_string(),
             key_name: "ut_key".to_string(),
         });
-        
+
         let cname = CString::new(self.get_name(false)).unwrap();
 
         let errno = unsafe {
@@ -153,7 +176,11 @@ impl CreateDestroy for Aio {
         }
         if let Some(encrypt_param) = encrypt {
             let crypto_name = self.get_name(true);
-            create_crypto_bdev(crypto_name.clone(), self.name.clone(), encrypt_param);
+            create_crypto_bdev(
+                crypto_name.clone(),
+                self.name.clone(),
+                encrypt_param,
+            );
             if let Some(mut bdev) = UntypedBdev::lookup_by_name(&crypto_name) {
                 if let Some(uuid) = self.uuid {
                     unsafe { bdev.set_raw_uuid(uuid.into()) };
